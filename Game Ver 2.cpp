@@ -25,7 +25,7 @@ inline void optimizeIO()
     cin.tie(NULL);
 }
 
-const int nmax = 1e2+7;
+const int nmax = 40;
 const LL LINF = 1e17;
 
 string to_str(LL x)
@@ -35,7 +35,53 @@ string to_str(LL x)
     return ss.str();
 }
 
+//bool cmp(const PII &A,const PII &B)
+//{
+//
+//}
+
 string grid[nmax];
+bool vis[nmax][nmax];
+vector<PII>moves[10];
+
+vector<int>dx = {0,1,0,-1};
+vector<int>dy = {1,0,-1,0};
+
+bool isSafe(int i,int j,int top_left_x,int top_left_y,int x_len,int y_len)
+{
+    if(i>=top_left_x && i<=top_left_x+x_len-1 && j>=top_left_y && j<= top_left_y+y_len-1)
+        return true;
+    return false;
+}
+
+int dfs(int id,int x,int y,int top_left_x,int top_left_y,int x_len,int y_len)
+{
+    vis[x][y] = true;
+
+//    cout<<x<<","<<y<<endl;
+    moves[id].push_back({x,y});
+
+    if(id%2==1)
+    {
+        for(int i=0; i<4; i++)
+        {
+            int nx = x+dx[i];
+            int ny = y+dy[i];
+            if(!vis[nx][ny] && grid[nx][ny]!='#' && isSafe(nx,ny,top_left_x,top_left_y,x_len,y_len))
+                dfs(id,nx,ny,top_left_x,top_left_y,x_len,y_len);
+        }
+    }
+    else
+    {
+        for(int i=3; i>=0; i--)
+        {
+            int nx = x+dx[i];
+            int ny = y+dy[i];
+            if(!vis[nx][ny] && grid[nx][ny]!='#' && isSafe(nx,ny,top_left_x,top_left_y,x_len,y_len))
+                dfs(id,nx,ny,top_left_x,top_left_y,x_len,y_len);
+        }
+    }
+}
 
 class Pac
 {
@@ -71,22 +117,6 @@ public:
     }
 };
 
-bool cmpPel(const Pellet &A,const Pellet &B)
-{
-    if(A.val==B.val)
-        return A.dist > B.dist;
-    return A.val>B.val;
-}
-
-bool cmpPel2(const Pellet &A,const Pellet &B)
-{
-    if(A.val==B.val)
-        return A.dist < B.dist;
-    return A.val<B.val;
-}
-
-vector<PII>init_pos;
-
 int main()
 {
     int width; // size of the grid
@@ -100,41 +130,29 @@ int main()
         grid[i] = row;
     }
 
-    init_pos.push_back({0,0});
-    init_pos.push_back({width/2,0});
-    init_pos.push_back({0,height/2});
-    init_pos.push_back({width/2,height/2});
-
-    init_pos.push_back({0+width/2,0+height/2});
-    init_pos.push_back({width-1,0+height/2});
-    init_pos.push_back({0+width/2,height-1});
-    init_pos.push_back({width-1,height-1});
-
-    // game loop
-    int game = 0;
     vector<Pac> myPacsNow;
     vector<Pac> enPacsNow;
-    vector<Pac> myPacsPrev;
-    vector<int> nowid(100,0);
-    vector<Pellet>vpell[100];
 
+    int game = 0;
+
+    // game loop
     while (1)
     {
-        myPacsPrev = myPacsNow;
-        myPacsNow.clear();
-        enPacsNow.clear();
 
         game++;
+
+        myPacsNow.clear();
+        enPacsNow.clear();
 
         int myScore;
         int opponentScore;
         cin >> myScore >> opponentScore;
         cin.ignore();
 
+
         int visiblePacCount; // all your pacs and enemy pacs in sight
         cin >> visiblePacCount;
         cin.ignore();
-
         for (int i = 0; i < visiblePacCount; i++)
         {
             int pacId; // pac number (unique within a team)
@@ -167,59 +185,33 @@ int main()
             int value; // amount of points this pellet is worth
             cin >> x >> y >> value;
             cin.ignore();
-
-            if(game==1)
-            {
-                for(auto myPac:myPacsNow)
-                {
-                    int dist = abs(myPac.x-x) + abs(myPac.y-y);
-                    vpell[myPac.id].push_back(Pellet(x,y,value,dist));
-                }
-            }
         }
 
         // Write an action using cout. DON'T FORGET THE "<< endl"
         // To debug: cerr << "Debug messages..." << endl;
 
-        cerr<<"MyPacs"<<endl;
-        for(auto x:myPacsNow)
-            cerr<<x.id<<": "<<x.x<<" , "<<x.y<<endl;
-
-        cerr<<"EnPacs"<<endl;
-        for(auto x:enPacsNow)
-            cerr<<x.id<<": "<<x.x<<" , "<<x.y<<endl;
+        if(game==1)
+        {
+            for(auto me:myPacsNow)
+            {
+                memset(vis,0,sizeof vis);
+                dfs(me.id,me.x,me.y,0,0,width,height);
+            }
+        }
 
         int len = 0;
-        for(auto myPac:myPacsNow)
+
+        for(auto me:myPacsNow)
         {
-            int id = (len + nowid[myPac.id])%8;
-
             if(len==0)
-                cout<<"MOVE "<<myPac.id<<" "<<init_pos[id].F<<" "<<init_pos[id].S;
+                cout<<"MOVE "<<me.id<<" "<<moves[me.id][game].F<<" "<<moves[me.id][game].S;
             else
-                cout<<"|MOVE "<<myPac.id<<" "<<init_pos[id].F<<" "<<init_pos[id].S;
-
-            if(game>1)
-            {
-                if(myPac.x==myPacsPrev[len].x && myPac.y==myPacsPrev[len].x)
-                nowid[myPac.id] += 4;
-            }
-
+                cout<<"|MOVE "<<me.id<<" "<<moves[me.id][game].F<<" "<<moves[me.id][game].S;
             len++;
 
         }
-
         cout<<endl;
-
 
 //        cout << "MOVE 0 15 10" << endl; // MOVE <pacId> <x> <y>
     }
 }
-
-/**
-
-TODO:
-1 . Collision hoile change route
-2. DFS
-
-**/
