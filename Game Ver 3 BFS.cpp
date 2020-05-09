@@ -45,52 +45,52 @@ bool visited[10][nmax][nmax];
 int dist[10][nmax][nmax];
 vector<PII>moves[10];
 
-vector<int>dx = {0,1,0,-1};
-vector<int>dy = {1,0,-1,0};
+vector<int>dr = {0,1,0,-1};
+vector<int>dc = {1,0,-1,0};
 
-bool isSafe(int i,int j,int top_left_x,int top_left_y,int x_len,int y_len)
+bool isSafe(int r,int c,int top_left_r,int top_left_c,int r_len,int c_len)
 {
-    if(i>=top_left_x && i<=top_left_x+x_len-1 && j>=top_left_y && j<= top_left_y+y_len-1)
+    if(c>=top_left_c && c<=top_left_c+c_len-1 && r>=top_left_r && r<= top_left_r+r_len-1)
         return true;
     return false;
 }
 
-void bfs(int id,int x,int y,int x_len,int y_len)
+void bfs(int id,int r,int c,int r_len,int c_len)
 {
-    for(int i=0; i<x_len; i++) // ditance inf
+    for(int i=0; i<r_len; i++) // ditance inf
     {
-        for(int j=0; j<y_len; j++)
+        for(int j=0; j<c_len; j++)
         {
-            dist[id][i][j]=INF;
+            dist[id][i][j]=INT_MAX;
             visited[id][i][j]=false;
         }
     }
 
-    dist[id][x][y]=0;
-    visited[id][x][y]=true;
+    dist[id][r][c]=0;
+    visited[id][r][c]=true;
 
-    int prevx,prevy;
+    int prevr,prevc;
 
     queue< PII > Q;
-    Q.push(MP(x,y));
+    Q.push(MP(r,c));
 
     while(!Q.empty())
     {
-        prevx = Q.front().F;
-        prevy = Q.front().S;
+        prevr = Q.front().F;
+        prevc = Q.front().S;
 
         Q.pop();
 
         for(int i=0; i<4; i++)
         {
-            x = prevx + dx[i];
-            y = prevy + dy[i];
+            r = prevr + dr[i];
+            c = (prevc + dc[i])%c_len;
 
-            if( isSafe(x,y,0,0,x_len,y_len) && visited[id][x][y]!=true && grid[x][y]!='#')
+            if(isSafe(r,c,0,0,r_len,c_len) && visited[id][r][c]!=true && grid[r][c]!='#')
             {
-                dist[id][x][y] = min(dist[id][prevx][prevy]+1,dist[id][x][y]);
-                visited[id][x][y] = true;
-                Q.push(MP(x,y));
+                dist[id][r][c] = min(dist[id][prevr][prevc]+1,dist[id][r][c]);
+                visited[id][r][c] = true;
+                Q.push(MP(r,c));
             }
         }
     }
@@ -102,30 +102,30 @@ class Pac
 public:
     int id;
     bool isMine;
-    int x,y;
+    int r,c;
 
     Pac() {}
 
-    Pac(int id,bool isMine,int x,int y)
+    Pac(int id,bool isMine,int r,int c)
     {
         this->id = id;
         this->isMine = isMine;
-        this->x = x;
-        this->y = y;
+        this->r = r;
+        this->c = c;
     }
 };
 
 class Pellet
 {
 public:
-    int x,y,val,dist;
+    int r,c,val,dist;
 
     Pellet() {}
 
-    Pellet(int x,int y,int val,int dist)
+    Pellet(int r,int c,int val,int dist)
     {
-        this->x = x;
-        this->y = y;
+        this->r = r;
+        this->c = c;
         this->val = val;
         this->dist = dist;
     }
@@ -133,9 +133,9 @@ public:
 
 bool cmpPel(const Pellet &A,const Pellet &B)
 {
-    if(A.val==B.val)
+//    if(A.val==B.val)
         return A.dist < B.dist;
-    return A.val>B.val;
+//    return A.val>B.val;
 }
 
 int main()
@@ -186,21 +186,26 @@ int main()
             cin >> pacId >> mine >> x >> y >> typeId >> speedTurnsLeft >> abilityCooldown;
             cin.ignore();
 
+            int r = y;
+            int c = x;
+
             if(mine==1)
             {
-                myPacsNow.push_back(Pac(pacId,mine,x,y));
-                grid[x][y] = '#';
+                myPacsNow.push_back(Pac(pacId,mine,r,c));
+                grid[r][c] = '#';
             }
             else
             {
-                enPacsNow.push_back(Pac(pacId,mine,x,y));
-                grid[x][y] = '#';
+                enPacsNow.push_back(Pac(pacId,mine,r,c));
+                grid[r][c] = '#';
             }
         }
 
         for(auto me:myPacsNow)
         {
-            bfs(me.id,me.x,me.y,width,height);
+            grid[me.r][me.c] = ' ';
+            bfs(me.id,me.r,me.c,height,width);
+            grid[me.r][me.c] = '#';
         }
 
         int visiblePelletCount; // all pellets in sight
@@ -214,10 +219,13 @@ int main()
             cin >> x >> y >> value;
             cin.ignore();
 
+            int r = y;
+            int c = x;
+
             for(auto myPac:myPacsNow)
             {
-                int distance = dist[myPac.id][x][y];
-                if(distance!=0) vpell[myPac.id].push_back(Pellet(x,y,value,distance));
+                int distance = dist[myPac.id][r][c];
+                if(distance!=0) vpell[myPac.id].push_back(Pellet(r,c,value,distance));
             }
         }
 
@@ -233,8 +241,8 @@ int main()
 
         for(auto myPac:myPacsNow)
         {
-            if(len==0) cout<<"MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].x<<" "<<vpell[myPac.id][0].y;
-            else cout<<"|MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].x<<" "<<vpell[myPac.id][0].y;
+            if(len==0) cout<<"MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].c<<" "<<vpell[myPac.id][0].r;
+            else cout<<"|MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].c<<" "<<vpell[myPac.id][0].r;
             len++;
         }
 
@@ -242,11 +250,11 @@ int main()
 
         for(auto me:myPacsNow)
         {
-            grid[me.x][me.y] = ' ';
+            grid[me.r][me.c] = ' ';
         }
         for(auto en:myPacsNow)
         {
-            grid[en.x][en.y] = ' ';
+            grid[en.r][en.c] = ' ';
         }
 
 //        cout << "MOVE 0 15 10" << endl; // MOVE <pacId> <x> <y>
