@@ -42,19 +42,11 @@ string to_str(LL x)
 
 string grid[nmax];
 bool visited[10][nmax][nmax];
-bool visited_total[nmax][nmax];
 int dist[10][nmax][nmax];
 vector<PII>moves[10];
 
 vector<int>dr = {0,1,0,-1};
 vector<int>dc = {1,0,-1,0};
-
-bool isMyPel(int mr,int mc,int pr,int pc)
-{
-    if(mr-pr==0 || mc-pc==0)
-        return true;
-    return false;
-}
 
 bool isSafe(int r,int c,int top_left_r,int top_left_c,int r_len,int c_len)
 {
@@ -141,9 +133,9 @@ public:
 
 bool cmpPel(const Pellet &A,const Pellet &B)
 {
-//    if(A.val==B.val)
+    if(A.val==B.val)
         return A.dist < B.dist;
-//    return A.val>B.val;
+    return A.val>B.val;
 }
 
 int main()
@@ -233,7 +225,7 @@ int main()
             for(auto myPac:myPacsNow)
             {
                 int distance = dist[myPac.id][r][c];
-                if(distance!=0 && isMyPel(myPac.r,myPac.c,r,c)) vpell[myPac.id].push_back(Pellet(r,c,value,distance));
+                if(distance!=0) vpell[myPac.id].push_back(Pellet(r,c,value,distance));
             }
         }
 
@@ -263,62 +255,8 @@ int main()
 
         for(auto myPac:myPacsNow)
         {
-            cerr<<"Size "<<myPac.id<<" : "<<vpell[myPac.id].size()<<endl;
-
-            if(vpell[myPac.id].size()>0)
-            {
-                if(len==0) cout<<"MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].c<<" "<<vpell[myPac.id][0].r;
-                else cout<<"|MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].c<<" "<<vpell[myPac.id][0].r;
-
-                visited_total[myPac.r][myPac.c] = true;
-            }
-            else
-            {
-                int max_d = 0;
-                PII go;
-
-                vector< pair<int,PII> >vp;
-
-                for(int i=0;i<height;i++)
-                {
-                    for(int j=0;j<width;j++)
-                    {
-                        if(dist[myPac.id][i][j]==INT_MAX || dist[myPac.id][i][j]==0)
-                            continue;
-
-                        if(visited_total[i][j]!=true)
-                        {
-                            vp.push_back({dist[myPac.id][i][j],{i,j}});
-                        }
-                    }
-                }
-
-                sort(ALL(vp));
-
-                int sz = vp.size();
-                sz /= 3;
-
-                if(len==0) cout<<"MOVE "<<myPac.id<<" "<<vp[sz].S.S<<" "<<vp[sz].S.F;
-                else cout<<"|MOVE "<<myPac.id<<" "<<vp[sz].S.S<<" "<<vp[sz].S.F;
-
-
-//                for(int i=0;i<4;i++)
-//                {
-//                    int nr = myPac.r + dr[i];
-//                    int nc = (myPac.c + dc[i])%width;
-//
-//                    if(isSafe(nr,nc,0,0,height,width)&& grid[nr][nc]!='#' && visited_after[myPac.id][nr][nc]!=true)
-//                    {
-//                        if(len==0) cout<<"MOVE "<<myPac.id<<" "<<nc<<" "<<nr;
-//                        else cout<<"|MOVE "<<myPac.id<<" "<<nc<<" "<<nr;
-//                        visited_after[myPac.id][nr][nc]=true;
-//
-//                        break;
-//                    }
-//                }
-            }
-
-
+            if(len==0) cout<<"MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].c<<" "<<vpell[myPac.id][0].r;
+            else cout<<"|MOVE "<<myPac.id<<" "<<vpell[myPac.id][0].c<<" "<<vpell[myPac.id][0].r;
             len++;
         }
 
