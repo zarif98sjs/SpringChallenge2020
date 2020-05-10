@@ -162,6 +162,9 @@ int main()
             vpell[i].clear();
 
         game++;
+
+        cerr<<"Game : "<<game<<endl;
+
         vector<Pac> myPacsNow;
         vector<Pac> enPacsNow;
 
@@ -239,6 +242,8 @@ int main()
 
         if(game%15==0)
         {
+            cerr<<"SPEEEEEEEED"<<endl;
+
             int len = 0;
 
             for(auto myPac:myPacsNow)
